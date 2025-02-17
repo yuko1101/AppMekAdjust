@@ -1,0 +1,115 @@
+package io.github.yuko1101.appmekadjust.neoforge.mixin;
+
+import appeng.api.config.Actionable;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEKey;
+import appeng.api.storage.StorageCells;
+import appeng.api.storage.cells.IBasicCellItem;
+import appeng.api.storage.cells.StorageCell;
+import me.ramidzkh.mekae2.qio.QioStorageAdapter;
+import mekanism.api.Action;
+import mekanism.api.inventory.qio.IQIOFrequency;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+@Mixin(QioStorageAdapter.class)
+public abstract class QioStorageAdapterMixin {
+    @Shadow public abstract @Nullable IQIOFrequency getFrequency();
+
+    @Inject(method = "insert", at = @At("HEAD"), cancellable = true)
+    private void onInsert(AEKey what, long amount, Actionable mode, IActionSource source, CallbackInfoReturnable<Long> cir) {
+        if (amount <= 0L) {
+            return;
+        }
+
+        IQIOFrequency freq = this.getFrequency();
+        if (freq == null) {
+            cir.setReturnValue(0L);
+            return;
+        }
+
+        AtomicLong remaining = new AtomicLong(amount);
+        HashMap<ItemStack, Long> extractedCells = new HashMap<>();
+        ArrayList<ItemStack> modifiedCells = new ArrayList<>();
+
+        freq.forAllStored((itemStack, value) -> {
+            if (remaining.get() <= 0) return;
+            if (itemStack.getItem() instanceof IBasicCellItem) {
+                for (long i = 0; i < value; i++) {
+                    var is = itemStack.copy();
+                    if (remaining.get() <= 0) return;
+                    StorageCell cellInv = StorageCells.getCellInventory(is, null);
+                    if (cellInv == null) return;
+
+                    var inserted = cellInv.insert(what, remaining.get(), mode, source);
+                    remaining.addAndGet(-inserted);
+                    extractedCells.compute(itemStack, (key, val) -> val == null ? 1 : val + 1);
+                    modifiedCells.add(is);
+                }
+            }
+        });
+
+        for (var entry : extractedCells.entrySet()) {
+            freq.massExtract(entry.getKey(), entry.getValue(), Action.fromFluidAction(mode.getFluidAction()));
+        }
+
+        for (var is : modifiedCells) {
+            freq.massInsert(is, 1, Action.fromFluidAction(mode.getFluidAction()));
+        }
+
+        cir.setReturnValue(amount - remaining.get());
+    }
+
+    @Inject(method = "extract", at = @At("HEAD"), cancellable = true)
+    private void onExtract(AEKey what, long amount, Actionable mode, IActionSource source, CallbackInfoReturnable<Long> cir) {
+        if (amount <= 0L) {
+            return;
+        }
+
+        IQIOFrequency freq = this.getFrequency();
+        if (freq == null) {
+            cir.setReturnValue(0L);
+            return;
+        }
+
+        AtomicLong remaining = new AtomicLong(amount);
+        HashMap<ItemStack, Long> extractedCells = new HashMap<>();
+        ArrayList<ItemStack> modifiedCells = new ArrayList<>();
+
+        freq.forAllStored((itemStack, value) -> {
+            if (remaining.get() <= 0) return;
+            if (itemStack.getItem() instanceof IBasicCellItem) {
+                for (long i = 0; i < value; i++) {
+                    var is = itemStack.copy();
+                    if (remaining.get() <= 0) return;
+                    StorageCell cellInv = StorageCells.getCellInventory(is, null);
+                    if (cellInv == null) return;
+
+                    var extracted = cellInv.extract(what, remaining.get(), mode, source);
+                    remaining.addAndGet(-extracted);
+                    extractedCells.compute(itemStack, (key, val) -> val == null ? 1 : val + 1);
+                    modifiedCells.add(is);
+                }
+            }
+        });
+
+        for (var entry : extractedCells.entrySet()) {
+            freq.massExtract(entry.getKey(), entry.getValue(), Action.fromFluidAction(mode.getFluidAction()));
+        }
+
+        for (var is : modifiedCells) {
+            freq.massInsert(is, 1, Action.fromFluidAction(mode.getFluidAction()));
+        }
+
+        cir.setReturnValue(amount - remaining.get());
+    }
+}

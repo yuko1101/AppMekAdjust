@@ -6,6 +6,7 @@
   "client": [
   ],
   "mixins": [
+    "QioStorageAdapterMixin"
   ],
   "injectors": {
     "defaultRequire": 1
