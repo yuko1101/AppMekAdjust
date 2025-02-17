@@ -3,6 +3,7 @@ package io.github.yuko1101.appmekadjust.neoforge.mixin;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.IBasicCellItem;
 import appeng.me.cells.BasicCellInventory;
@@ -11,8 +12,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import io.github.yuko1101.appmekadjust.neoforge.mixin.accessor.BasicCellInventoryAccessor;
+import io.github.yuko1101.appmekadjust.neoforge.extension.QIODriveDataExtension;
 import io.github.yuko1101.appmekadjust.neoforge.qio.QIOStorageCellData;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import mekanism.api.Action;
 import mekanism.common.attachments.qio.DriveContents;
 import mekanism.common.content.qio.IQIODriveItem;
@@ -27,11 +30,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(QIODriveData.class)
-public abstract class QIODriveDataMixin {
+public abstract class QIODriveDataMixin implements QIODriveDataExtension {
     @Mutable
     @Shadow @Final private QIODriveData.QIODriveKey key;
 
     @Shadow @Final private Object2LongMap<HashedItem> itemMap;
+
+    @Unique
+    private final Object2LongMap<AEKey> appMekAdjust$ae2ItemMap = new Object2LongOpenHashMap<>();
 
     @Unique private BasicCellInventory appMekAdjust$cellInventory;
 
@@ -77,6 +83,8 @@ public abstract class QIODriveDataMixin {
             if (e.getKey() instanceof AEItemKey itemKey) {
                 HashedItem hashedItem = HashedItem.create(itemKey.toStack());
                 itemMap.put(hashedItem, e.getLongValue());
+            } else {
+                appMekAdjust$ae2ItemMap.put(e.getKey(), e.getLongValue());
             }
         }
         return false;
@@ -92,5 +100,10 @@ public abstract class QIODriveDataMixin {
     private void onRemove(HashedItem type, long amount, Action action, CallbackInfoReturnable<Long> cir, @Local(name = "removed") long removed) {
         if (appMekAdjust$cellInventory == null) return;
         appMekAdjust$cellInventory.extract(AEItemKey.of(type.getInternalStack()), removed, Actionable.MODULATE, IActionSource.empty());
+    }
+
+    @Override
+    public Object2LongMap<AEKey> appMekAdjust$getAE2ItemMap() {
+        return appMekAdjust$ae2ItemMap;
     }
 }
