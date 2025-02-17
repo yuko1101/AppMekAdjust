@@ -21,7 +21,6 @@ public abstract class QioStorageAdapterMixin {
 
     @Inject(method = "insert", at = @At("HEAD"), cancellable = true)
     private void onInsert(AEKey what, long amount, Actionable mode, IActionSource source, CallbackInfoReturnable<Long> cir) {
-        System.out.println("onInsert: " + what + ", " + amount + ", " + mode + ", " + source);
         if (amount <= 0) {
             cir.setReturnValue(0L);
             return;
@@ -34,7 +33,6 @@ public abstract class QioStorageAdapterMixin {
             }
 
             var inserted = freq.appMekAdjust$massInsertAE2Items(what, amount, Action.fromFluidAction(mode.getFluidAction()), source);
-            System.out.println("onInsert2: " + what + ", " + amount + ", " + mode + ", " + source + ", " + inserted);
             cir.setReturnValue(inserted);
         }
     }
