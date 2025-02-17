@@ -6,6 +6,8 @@ import appeng.api.stacks.AEKey;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.IBasicCellItem;
 import appeng.api.storage.cells.StorageCell;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import me.ramidzkh.mekae2.qio.QioStorageAdapter;
 import mekanism.api.Action;
 import mekanism.api.inventory.qio.IQIOFrequency;
@@ -13,9 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,20 +24,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class QioStorageAdapterMixin {
     @Shadow public abstract @Nullable IQIOFrequency getFrequency();
 
-    @Inject(method = "insert", at = @At("HEAD"), cancellable = true)
-    private void onInsert(AEKey what, long amount, Actionable mode, IActionSource source, CallbackInfoReturnable<Long> cir) {
+    @WrapMethod(method = "insert")
+    private long insert(AEKey what, long amount, Actionable mode, IActionSource source, Operation<Long> original) {
         if (amount <= 0L) {
-            return;
+            return 0L;
         }
 
         IQIOFrequency freq = this.getFrequency();
         if (freq == null) {
-            cir.setReturnValue(0L);
-            return;
+            return 0L;
         }
 
         AtomicLong remaining = new AtomicLong(amount);
 
+        // try to insert into the storage cell in the QIO drive first
         HashMap<ItemStack, Long> notPreferredCells = new HashMap<>();
 
         HashMap<ItemStack, Long> extractedCells = new HashMap<>();
@@ -93,22 +92,30 @@ public abstract class QioStorageAdapterMixin {
             freq.massInsert(is, 1, Action.fromFluidAction(mode.getFluidAction()));
         }
 
-        cir.setReturnValue(amount - remaining.get());
+        if (remaining.get() > 0) {
+            remaining.addAndGet(-original.call(what, remaining.get(), mode, source));
+        }
+
+        return amount - remaining.get();
     }
 
-    @Inject(method = "extract", at = @At("HEAD"), cancellable = true)
-    private void onExtract(AEKey what, long amount, Actionable mode, IActionSource source, CallbackInfoReturnable<Long> cir) {
+    @WrapMethod(method = "extract")
+    private long extract(AEKey what, long amount, Actionable mode, IActionSource source, Operation<Long> original) {
         if (amount <= 0L) {
-            return;
+            return 0L;
         }
 
         IQIOFrequency freq = this.getFrequency();
         if (freq == null) {
-            cir.setReturnValue(0L);
-            return;
+            return 0L;
         }
 
         AtomicLong remaining = new AtomicLong(amount);
+
+        // try to extract from the QIO drive itself first
+        remaining.addAndGet(-original.call(what, remaining.get(), mode, source));
+        if (remaining.get() <= 0) return amount;
+
         HashMap<ItemStack, Long> extractedCells = new HashMap<>();
         ArrayList<ItemStack> modifiedCells = new ArrayList<>();
 
@@ -137,6 +144,6 @@ public abstract class QioStorageAdapterMixin {
             freq.massInsert(is, 1, Action.fromFluidAction(mode.getFluidAction()));
         }
 
-        cir.setReturnValue(amount - remaining.get());
+        return amount - remaining.get();
     }
 }
