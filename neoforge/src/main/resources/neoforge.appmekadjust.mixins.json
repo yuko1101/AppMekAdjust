@@ -6,7 +6,12 @@
   "client": [
   ],
   "mixins": [
-    "QioStorageAdapterMixin"
+    "QIODriveDataMixin",
+    "QIODriveSlotMixin",
+    "QIOFrequencyMixin",
+    "QioStorageAdapterMixin",
+    "accessor.BasicCellInventoryAccessor",
+    "accessor.QIOItemTypeDataAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
