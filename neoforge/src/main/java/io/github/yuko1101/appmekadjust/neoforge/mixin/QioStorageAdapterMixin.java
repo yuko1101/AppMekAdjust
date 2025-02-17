@@ -38,6 +38,9 @@ public abstract class QioStorageAdapterMixin {
         }
 
         AtomicLong remaining = new AtomicLong(amount);
+
+        HashMap<ItemStack, Long> notPreferredCells = new HashMap<>();
+
         HashMap<ItemStack, Long> extractedCells = new HashMap<>();
         ArrayList<ItemStack> modifiedCells = new ArrayList<>();
 
@@ -50,6 +53,12 @@ public abstract class QioStorageAdapterMixin {
                     StorageCell cellInv = StorageCells.getCellInventory(is, null);
                     if (cellInv == null) return;
 
+                    // check if it's preferred only for the first cell in the stack
+                    if (i == 0 && cellInv.extract(what, 1, Actionable.SIMULATE, source) == 0) {
+                        notPreferredCells.put(itemStack, value);
+                        return;
+                    }
+
                     var inserted = cellInv.insert(what, remaining.get(), mode, source);
                     remaining.addAndGet(-inserted);
                     extractedCells.compute(itemStack, (key, val) -> val == null ? 1 : val + 1);
@@ -57,6 +66,24 @@ public abstract class QioStorageAdapterMixin {
                 }
             }
         });
+
+        if (remaining.get() > 0) {
+            for (var entry : notPreferredCells.entrySet()) cellLoop: {
+                ItemStack itemStack = entry.getKey();
+                long value = entry.getValue();
+                for (long i = 0; i < value; i++) {
+                    var is = entry.getKey().copy();
+                    if (remaining.get() <= 0) break cellLoop;
+                    StorageCell cellInv = StorageCells.getCellInventory(is, null);
+                    if (cellInv == null) break;
+
+                    var inserted = cellInv.insert(what, remaining.get(), mode, source);
+                    remaining.addAndGet(-inserted);
+                    extractedCells.compute(itemStack, (key, val) -> val == null ? 1 : val + 1);
+                    modifiedCells.add(is);
+                }
+            }
+        }
 
         for (var entry : extractedCells.entrySet()) {
             freq.massExtract(entry.getKey(), entry.getValue(), Action.fromFluidAction(mode.getFluidAction()));
