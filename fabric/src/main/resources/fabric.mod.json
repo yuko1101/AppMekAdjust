@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "appmekadjust",
+  "version": "${version}",
+  "name": "AppMekAdjust",
+  "description": "Rebalances Mekanism mod.",
+  "authors": [
+    "yuko1101"
+  ],
+  "contact": {
+    "homepage": "https://github.com/yuko1101/MekanismAdjust"
+  },
+  "license": "MIT",
+  "icon": "assets/appmekadjust/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "io.github.yuko1101.appmekadjust.fabric.AppMekAdjustFabric"
+    ]
+  },
+  "mixins": [
+    "appmekadjust.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
