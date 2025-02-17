@@ -38,10 +38,7 @@ subprojects {
         val mappings = configurations.getByName("mappings")
 
         minecraft("net.minecraft:minecraft:${rootProject.properties["minecraft_version"]!!}")
-        mappings(loom.layered {
-            mappings("net.fabricmc:yarn:${rootProject.properties["yarn_mappings"]!!}:v2")
-            mappings("dev.architectury:yarn-mappings-patch-neoforge:${rootProject.properties["yarn_mappings_patch_neoforge"]!!}")
-        })
+        mappings(loom.officialMojangMappings())
     }
 
     java {

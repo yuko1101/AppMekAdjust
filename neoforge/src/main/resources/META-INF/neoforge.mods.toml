@@ -28,7 +28,28 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.appmekadjust]]
+modId = "ae2"
+type = "required"
+versionRange = "[${ae2_version},)"
+ordering = "NONE"
+side = "BOTH"
 
+[[dependencies.appmekadjust]]
+modId = "mekanism"
+type = "required"
+versionRange = "[${mekanism_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.appmekadjust]]
+modId = "appmek"
+type = "required"
+versionRange = "[${appmek_version},)"
+ordering = "NONE"
+side = "BOTH"
 
 [[mixins]]
 config = "appmekadjust.mixins.json"
+
+[[mixins]]
+config = "neoforge.appmekadjust.mixins.json"

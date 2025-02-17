@@ -35,6 +35,7 @@ dependencies {
     }
     shadowBundle(project(path = ":common", configuration = "transformProductionNeoForge"))
 
+    modImplementation("curse.maven:guideme-1173950:6179772")
     modImplementation("curse.maven:applied-energistics-2-223794:6193778")
     modImplementation("curse.maven:mekanism-268560:6018306")
     modImplementation("curse.maven:applied-mekanistics-574300:5978711")
@@ -43,8 +44,9 @@ dependencies {
 tasks.processResources {
     val props = mapOf(
         "version" to project.version,
+        "ae2_version" to rootProject.properties["ae2_version"]!!,
         "mekanism_version" to rootProject.properties["mekanism_version"]!!,
-        "applied_mekanistics_version" to rootProject.properties["applied_mekanistics_version"]!!
+        "appmek_version" to rootProject.properties["appmek_version"]!!
     )
     inputs.properties(props)
 
