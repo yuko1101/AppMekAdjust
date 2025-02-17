@@ -1,5 +1,6 @@
 package io.github.yuko1101.appmekadjust.neoforge.mixin;
 
+import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.storage.cells.IBasicCellItem;
 import io.github.yuko1101.appmekadjust.neoforge.mixin.accessor.QIOItemTypeDataAccessor;
@@ -7,7 +8,7 @@ import io.github.yuko1101.appmekadjust.neoforge.extension.QIODriveDataExtension;
 import io.github.yuko1101.appmekadjust.neoforge.extension.QIOFrequencyExtension;
 import io.github.yuko1101.appmekadjust.neoforge.qio.QIOStorageCellData;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import mekanism.api.Action;
 import mekanism.common.content.qio.QIODriveData;
 import mekanism.common.content.qio.QIOFrequency;
 import mekanism.common.lib.inventory.HashedItem;
@@ -85,5 +86,55 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
     @Override
     public HashMap<AEKey, HashMap<QIODriveData.QIODriveKey, Long>> appMekAdjust$getAE2ItemMap() {
         return appMekAdjust$ae2ItemMap;
+    }
+
+    @Override
+    public long appMekAdjust$massInsertAE2Items(AEKey key, long amount, Action action, IActionSource source) {
+        if (amount <= 0) return 0;
+
+        var remaining = amount;
+        var map = this.appMekAdjust$ae2ItemMap.computeIfAbsent(key, k -> new HashMap<>());
+
+        for (var driveKey : this.driveMap.keySet()) {
+            if (remaining <= 0) break;
+
+            var driveData = this.driveMap.get(driveKey);
+            if (driveData == null) continue;
+
+            if (driveData instanceof QIOStorageCellData cellData) {
+                var inserted = cellData.insert(key, remaining, action, source);
+                if (action.execute()) {
+                    map.put(driveKey, map.getOrDefault(driveKey, 0L) + inserted);
+                }
+                remaining -= inserted;
+            }
+        }
+
+        return amount - remaining;
+    }
+
+    @Override
+    public long appMekAdjust$massExtractAE2Items(AEKey key, long amount, Action action, IActionSource source) {
+        if (amount <= 0) return 0;
+
+        var remaining = amount;
+        var map = this.appMekAdjust$ae2ItemMap.computeIfAbsent(key, k -> new HashMap<>());
+
+        for (var driveEntry : map.entrySet()) {
+            if (remaining <= 0) break;
+
+            var drive = (QIOStorageCellData) this.driveMap.get(driveEntry.getKey());
+            if (drive == null) continue;
+
+            var extracted = drive.extract(key, remaining, action, source);
+            if (action.execute()) {
+                var newAmount = driveEntry.getValue() - extracted;
+                if (newAmount < 0) throw new IllegalStateException("Sync error: " + key + " is extracted more than stored (Requested: " + amount + ", Extracted: " + extracted + ", Stored: " + driveEntry.getValue() + ")");
+                map.put(driveEntry.getKey(), newAmount);
+            }
+            remaining -= extracted;
+        }
+
+        return amount - remaining;
     }
 }
