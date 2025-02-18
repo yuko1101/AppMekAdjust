@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.SequencedMap;
 
@@ -137,6 +138,7 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
         var remaining = amount;
         var map = this.appMekAdjust$ae2ItemMap.computeIfAbsent(key, k -> new HashMap<>());
 
+        var keysToRemove = new ArrayList<QIODriveData.QIODriveKey>();
         for (var driveEntry : map.entrySet()) {
             if (remaining <= 0) break;
 
@@ -148,13 +150,14 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
                 var newAmount = driveEntry.getValue() - extracted;
                 if (newAmount < 0) throw new IllegalStateException("Sync error: " + key + " is extracted more than stored (Requested: " + amount + ", Extracted: " + extracted + ", Stored: " + driveEntry.getValue() + ")");
 
-                if (newAmount == 0) map.remove(driveEntry.getKey());
+                if (newAmount == 0) keysToRemove.add(driveEntry.getKey());
                 else map.put(driveEntry.getKey(), newAmount);
 
                 appMekAdjust$ae2ItemCount -= extracted;
             }
             remaining -= extracted;
         }
+        keysToRemove.forEach(map::remove);
 
         return amount - remaining;
     }
