@@ -61,6 +61,7 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
 
             QIOStorageCellData data = new QIOStorageCellData(key);
             totalCountCapacity += data.getCountCapacity();
+            totalCountCapacity -= data.getDecreasedItemCapacity();
             totalTypeCapacity += data.getTypeCapacity();
             driveMap.put(key, data);
             for (Object2LongMap.Entry<HashedItem> entry : data.getItemMap().object2LongEntrySet()) {
@@ -79,9 +80,10 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
 
     @Inject(method = "removeDrive", at = @At(value = "INVOKE", target = "Lmekanism/common/content/qio/QIOFrequency;setNeedsUpdate()V"))
     private void onRemoveDrive(QIODriveData.QIODriveKey key, boolean updateItemMap, CallbackInfo ci) {
-        QIODriveDataExtension data = ((QIODriveDataExtension) this.driveMap.get(key));
+        QIODriveData drive = this.driveMap.get(key);
+        QIODriveDataExtension driveExtension = (QIODriveDataExtension) drive;
 
-        for (Object2LongMap.Entry<AEKey> entry : data.appMekAdjust$getAE2ItemMap().object2LongEntrySet()) {
+        for (Object2LongMap.Entry<AEKey> entry : driveExtension.appMekAdjust$getAE2ItemMap().object2LongEntrySet()) {
             AEKey aeKey = entry.getKey();
             HashMap<QIODriveData.QIODriveKey, Long> map = appMekAdjust$ae2ItemMap.get(aeKey);
             if (map == null) return;
@@ -90,6 +92,10 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
                 appMekAdjust$ae2ItemMap.remove(aeKey);
             }
             appMekAdjust$ae2ItemCount -= entry.getLongValue();
+        }
+
+        if (drive instanceof QIOStorageCellData cellData) {
+            totalCountCapacity += cellData.getDecreasedItemCapacity();
         }
     }
 
@@ -134,14 +140,17 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
         for (var driveEntry : map.entrySet()) {
             if (remaining <= 0) break;
 
-            var drive = (QIOStorageCellData) this.driveMap.get(driveEntry.getKey());
-            if (drive == null) continue;
+            var cellData = (QIOStorageCellData) this.driveMap.get(driveEntry.getKey());
+            if (cellData == null) continue;
 
-            var extracted = drive.extract(key, remaining, action, source);
+            var extracted = cellData.extract(key, remaining, action, source);
             if (action.execute()) {
                 var newAmount = driveEntry.getValue() - extracted;
                 if (newAmount < 0) throw new IllegalStateException("Sync error: " + key + " is extracted more than stored (Requested: " + amount + ", Extracted: " + extracted + ", Stored: " + driveEntry.getValue() + ")");
-                map.put(driveEntry.getKey(), newAmount);
+
+                if (newAmount == 0) map.remove(driveEntry.getKey());
+                else map.put(driveEntry.getKey(), newAmount);
+
                 appMekAdjust$ae2ItemCount -= extracted;
             }
             remaining -= extracted;
@@ -176,5 +185,10 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
             }
         }
         return getTotalItemTypes(remote) + ae2TypeCapacity;
+    }
+
+    @Override
+    public void appMekAdjust$decreaseItemCapacity(long amount) {
+        totalCountCapacity -= amount;
     }
 }

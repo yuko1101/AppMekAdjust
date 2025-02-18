@@ -16,4 +16,6 @@ public interface QIOFrequencyExtension {
 
     long appMekAdjust$getTotalItemCapacity();
     long appMekAdjust$getTotalTypeCapacity(boolean remote);
+
+    void appMekAdjust$decreaseItemCapacity(long amount);
 }
