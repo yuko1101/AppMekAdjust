@@ -4,6 +4,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.IBasicCellItem;
+import appeng.api.storage.cells.StorageCell;
 import appeng.me.cells.BasicCellInventory;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -87,5 +88,10 @@ public abstract class QIODriveDataMixin implements QIODriveDataExtension {
     @Override
     public Object2LongMap<AEKey> appMekAdjust$getAE2ItemMap() {
         return appMekAdjust$ae2ItemMap;
+    }
+
+    @Override
+    public StorageCell appMekAdjust$getCellInventory() {
+        return appMekAdjust$cellInventory;
     }
 }

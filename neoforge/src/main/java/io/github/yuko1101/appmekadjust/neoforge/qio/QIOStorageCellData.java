@@ -5,7 +5,6 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
-import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.IBasicCellItem;
 import appeng.api.storage.cells.StorageCell;
 import appeng.items.storage.BasicStorageCell;
@@ -19,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 public class QIOStorageCellData extends QIODriveData {
     private final ItemStack cellStack;
     private final IBasicCellItem cellItem;
-    private final StorageCell delegate;
+    private final StorageCell cellInventory;
 
     private long ae2ItemCount;
     private long decreasedItemCapacity;
@@ -29,8 +28,8 @@ public class QIOStorageCellData extends QIODriveData {
         this.cellStack = key.getDriveStack();
         this.cellItem = (IBasicCellItem) cellStack.getItem();
 
-        this.delegate = StorageCells.getCellInventory(cellStack, null);
-        if (delegate == null) {
+        this.cellInventory = ((QIODriveDataExtension) this).appMekAdjust$getCellInventory();
+        if (cellInventory == null) {
             throw new IllegalStateException("Failed to create storage cell for " + cellStack);
         }
 
@@ -41,7 +40,7 @@ public class QIOStorageCellData extends QIODriveData {
     @Override
     public long add(HashedItem type, long amount, Action action) {
         var isNewType = !getItemMap().containsKey(type);
-        var insertedIntoAE2 = delegate.insert(AEItemKey.of(type.getInternalStack()), amount, Actionable.of(action.toFluidAction()), IActionSource.empty());
+        var insertedIntoAE2 = cellInventory.insert(AEItemKey.of(type.getInternalStack()), amount, Actionable.of(action.toFluidAction()), IActionSource.empty());
         var inserted = insertedIntoAE2 - super.add(type, insertedIntoAE2, action);
         if (inserted != insertedIntoAE2) {
             throw new IllegalStateException("Sync error: " + type + " is inserted less than AE2 (Requested: " + amount + ", Inserted: " + inserted + ", InsertedIntoAE2: " + insertedIntoAE2 + ")");
@@ -54,7 +53,7 @@ public class QIOStorageCellData extends QIODriveData {
 
     @Override
     public long remove(HashedItem type, long amount, Action action) {
-        var extractedFromAE2 = delegate.extract(AEItemKey.of(type.getInternalStack()), amount, Actionable.of(action.toFluidAction()), IActionSource.empty());
+        var extractedFromAE2 = cellInventory.extract(AEItemKey.of(type.getInternalStack()), amount, Actionable.of(action.toFluidAction()), IActionSource.empty());
         var extracted = super.remove(type, extractedFromAE2, action);
         if (extracted != extractedFromAE2) {
             throw new IllegalStateException("Sync error: " + type + " is extracted less than AE2 (Requested: " + amount + ", Extracted: " + extracted + ", ExtractedFromAE2: " + extractedFromAE2 + ")");
@@ -70,7 +69,7 @@ public class QIOStorageCellData extends QIODriveData {
         if (key instanceof AEItemKey itemKey) {
             return amount - add(HashedItem.create(itemKey.toStack()), amount, action);
         }
-        var inserted = delegate.insert(key, amount, Actionable.of(action.toFluidAction()), source);
+        var inserted = cellInventory.insert(key, amount, Actionable.of(action.toFluidAction()), source);
         if (action.execute()) {
             var ae2ItemMap = ((QIODriveDataExtension) this).appMekAdjust$getAE2ItemMap();
             ae2ItemMap.compute(key, (k, v) -> (v == null ? 0 : v) + inserted);
@@ -85,7 +84,7 @@ public class QIOStorageCellData extends QIODriveData {
         if (key instanceof AEItemKey itemKey) {
             return remove(HashedItem.create(itemKey.toStack()), amount, action);
         }
-        var extracted = delegate.extract(key, amount, Actionable.of(action.toFluidAction()), source);
+        var extracted = cellInventory.extract(key, amount, Actionable.of(action.toFluidAction()), source);
         if (action.execute()) {
             var ae2ItemMap = ((QIODriveDataExtension) this).appMekAdjust$getAE2ItemMap();
             ae2ItemMap.compute(key, (k, v) -> {
