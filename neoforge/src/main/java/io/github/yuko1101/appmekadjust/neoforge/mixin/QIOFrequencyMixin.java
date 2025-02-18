@@ -112,19 +112,38 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
         var remaining = amount;
         var map = this.appMekAdjust$ae2ItemMap.computeIfAbsent(key, k -> new HashMap<>());
 
-        for (var driveKey : this.driveMap.keySet()) {
+        // first we try to add the items to an already-containing drive
+        for (var driveEntry : map.entrySet()) {
             if (remaining <= 0) break;
 
-            var driveData = this.driveMap.get(driveKey);
-            if (driveData == null) continue;
+            var cellData = (QIOStorageCellData) this.driveMap.get(driveEntry.getKey());
+            if (cellData == null) continue;
 
-            if (driveData instanceof QIOStorageCellData cellData) {
-                var inserted = cellData.insert(key, remaining, action, source);
-                if (action.execute()) {
-                    map.put(driveKey, map.getOrDefault(driveKey, 0L) + inserted);
-                    appMekAdjust$ae2ItemCount += inserted;
+            var inserted = cellData.insert(key, remaining, action, source);
+            if (action.execute()) {
+                var newAmount = driveEntry.getValue() + inserted;
+                map.put(driveEntry.getKey(), newAmount);
+                appMekAdjust$ae2ItemCount += inserted;
+            }
+            remaining -= inserted;
+        }
+
+        // next, we add the items to any drive that will take it
+        if (remaining > 0) {
+            for (var driveKey : this.driveMap.keySet()) {
+                if (remaining <= 0) break;
+
+                var driveData = this.driveMap.get(driveKey);
+                if (driveData == null) continue;
+
+                if (driveData instanceof QIOStorageCellData cellData) {
+                    var inserted = cellData.insert(key, remaining, action, source);
+                    if (action.execute()) {
+                        map.put(driveKey, map.getOrDefault(driveKey, 0L) + inserted);
+                        appMekAdjust$ae2ItemCount += inserted;
+                    }
+                    remaining -= inserted;
                 }
-                remaining -= inserted;
             }
         }
 
