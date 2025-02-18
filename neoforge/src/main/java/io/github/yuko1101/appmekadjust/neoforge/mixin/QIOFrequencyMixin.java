@@ -2,7 +2,7 @@ package io.github.yuko1101.appmekadjust.neoforge.mixin;
 
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
-import appeng.api.storage.cells.IBasicCellItem;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import io.github.yuko1101.appmekadjust.neoforge.mixin.accessor.QIOItemTypeDataAccessor;
 import io.github.yuko1101.appmekadjust.neoforge.extension.QIODriveDataExtension;
 import io.github.yuko1101.appmekadjust.neoforge.extension.QIOFrequencyExtension;
@@ -55,7 +55,7 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
 
     @Inject(method = "addDrive", at = @At("HEAD"))
     private void onAddDrive(QIODriveData.QIODriveKey key, CallbackInfo ci) {
-        if (key.getDriveStack().getItem() instanceof IBasicCellItem) {
+        if (key.getDriveStack().getItem() instanceof ICellWorkbenchItem) {
             if (driveMap.containsKey(key)) {
                 removeDrive(key, true);
             }

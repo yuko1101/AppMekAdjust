@@ -1,6 +1,6 @@
 package io.github.yuko1101.appmekadjust.neoforge.mixin;
 
-import appeng.api.storage.cells.IBasicCellItem;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import mekanism.common.content.qio.QIODriveData;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +15,7 @@ public abstract class QIODriveKeyMixin {
 
     @Inject(method = "updateMetadata", at = @At("HEAD"), cancellable = true)
     private void updateMetadata(QIODriveData data, CallbackInfo ci) {
-        if (this.getDriveStack().getItem() instanceof IBasicCellItem) {
+        if (this.getDriveStack().getItem() instanceof ICellWorkbenchItem) {
             ci.cancel();
         }
     }

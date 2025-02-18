@@ -5,7 +5,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
-import appeng.api.storage.cells.IBasicCellItem;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import appeng.api.storage.cells.StorageCell;
 import appeng.items.storage.BasicStorageCell;
 import io.github.yuko1101.appmekadjust.neoforge.extension.QIODriveDataExtension;
@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class QIOStorageCellData extends QIODriveData {
     private final ItemStack cellStack;
-    private final IBasicCellItem cellItem;
+    private final ICellWorkbenchItem cellItem;
     private final StorageCell cellInventory;
 
     private long ae2ItemCount;
@@ -26,7 +26,7 @@ public class QIOStorageCellData extends QIODriveData {
     public QIOStorageCellData(QIODriveKey key) {
         super(key);
         this.cellStack = key.getDriveStack();
-        this.cellItem = (IBasicCellItem) cellStack.getItem();
+        this.cellItem = (ICellWorkbenchItem) cellStack.getItem();
 
         this.cellInventory = ((QIODriveDataExtension) this).appMekAdjust$getCellInventory();
         if (cellInventory == null) {
@@ -110,14 +110,14 @@ public class QIOStorageCellData extends QIODriveData {
 
     public long getAE2ItemCapacity() {
         if (cellItem instanceof BasicStorageCell basicStorageCell && basicStorageCell.getKeyType() != AEKeyType.items()) {
-            return (cellItem.getBytes(cellStack) - (long) getAE2TypeCount() * 8) * 8;
+            return (basicStorageCell.getBytes(cellStack) - (long) getAE2TypeCount() * 8) * 8;
         }
         return 0;
     }
 
     public int getAE2TypeCapacity() {
         if (cellItem instanceof BasicStorageCell basicStorageCell && basicStorageCell.getKeyType() != AEKeyType.items()) {
-            return cellItem.getTotalTypes(cellStack);
+            return basicStorageCell.getTotalTypes(cellStack);
         }
         return 0;
     }
@@ -141,17 +141,17 @@ public class QIOStorageCellData extends QIODriveData {
         freqExtension.appMekAdjust$decreaseItemCapacity(amount);
     }
 
-    public static long getItemCountCapacity(ItemStack cellStack, IBasicCellItem cellItem, int usedTypes) {
+    public static long getItemCountCapacity(ItemStack cellStack, ICellWorkbenchItem cellItem, int usedTypes) {
         if (cellItem instanceof BasicStorageCell basicStorageCell && basicStorageCell.getKeyType() == AEKeyType.items()) {
-            return (cellItem.getBytes(cellStack) - (long) usedTypes * 8) * 8;
+            return (basicStorageCell.getBytes(cellStack) - (long) usedTypes * 8) * 8;
         }
         // TODO: check if other cell items can store items
         return 0;
     }
 
-    public static int getItemTypeCapacity(ItemStack cellStack, IBasicCellItem cellItem) {
+    public static int getItemTypeCapacity(ItemStack cellStack, ICellWorkbenchItem cellItem) {
         if (cellItem instanceof BasicStorageCell basicStorageCell && basicStorageCell.getKeyType() == AEKeyType.items()) {
-            return cellItem.getTotalTypes(cellStack);
+            return basicStorageCell.getTotalTypes(cellStack);
         }
         // TODO: check if other cell items can store items
         return 0;

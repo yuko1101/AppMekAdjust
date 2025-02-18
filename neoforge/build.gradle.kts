@@ -39,6 +39,8 @@ dependencies {
     modImplementation("curse.maven:applied-energistics-2-223794:6193778")
     modImplementation("curse.maven:mekanism-268560:6018306")
     modImplementation("curse.maven:applied-mekanistics-574300:5978711")
+    modImplementation("curse.maven:glodium-957920:5821676")
+    modImplementation("curse.maven:applied-flux-965012:6171002")
 }
 
 tasks.processResources {

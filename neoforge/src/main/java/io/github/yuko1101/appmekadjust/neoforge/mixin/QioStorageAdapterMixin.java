@@ -25,6 +25,7 @@ public abstract class QioStorageAdapterMixin {
 
     @Inject(method = "insert", at = @At("HEAD"), cancellable = true)
     private void onInsert(AEKey what, long amount, Actionable mode, IActionSource source, CallbackInfoReturnable<Long> cir) {
+        System.out.println("onInsert: " + what + ", " + amount + ", " + mode + ", " + source);
         if (amount <= 0) {
             cir.setReturnValue(0L);
             return;

@@ -1,6 +1,6 @@
 package io.github.yuko1101.appmekadjust.neoforge.mixin;
 
-import appeng.api.storage.cells.IBasicCellItem;
+import appeng.api.storage.cells.ICellWorkbenchItem;
 import mekanism.common.content.qio.IQIODriveHolder;
 import mekanism.common.content.qio.QIODriveData;
 import mekanism.common.inventory.slot.QIODriveSlot;
@@ -20,7 +20,7 @@ public interface IQIODriveHolderMixin {
     @Inject(method = "save", at = @At("HEAD"), cancellable = true)
     default void save(int slot, QIODriveData data, CallbackInfo ci) {
         ItemStack stack = this.getDriveSlots().get(slot).getStack();
-        if (stack.getItem() instanceof IBasicCellItem) {
+        if (stack.getItem() instanceof ICellWorkbenchItem) {
             ci.cancel();
         }
     }
