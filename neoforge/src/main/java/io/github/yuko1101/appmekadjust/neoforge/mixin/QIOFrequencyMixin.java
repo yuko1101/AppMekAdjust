@@ -12,6 +12,7 @@ import mekanism.api.Action;
 import mekanism.common.content.qio.QIODriveData;
 import mekanism.common.content.qio.QIOFrequency;
 import mekanism.common.lib.inventory.HashedItem;
+import org.apache.commons.lang3.NotImplementedException;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -41,8 +42,15 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
 
     @Shadow protected abstract void setNeedsUpdate();
 
+    @Shadow public abstract long getTotalItemCountCapacity();
+
+    @Shadow public abstract int getTotalItemTypes(boolean remote);
+
     @Unique
     private final HashMap<AEKey, HashMap<QIODriveData.QIODriveKey, Long>> appMekAdjust$ae2ItemMap = new HashMap<>();
+
+    @Unique
+    private long appMekAdjust$ae2ItemCount = 0;
 
     @Inject(method = "addDrive", at = @At("HEAD"))
     private void onAddDrive(QIODriveData.QIODriveKey key, CallbackInfo ci) {
@@ -63,6 +71,7 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
             for (Object2LongMap.Entry<AEKey> entry : ((QIODriveDataExtension) data).appMekAdjust$getAE2ItemMap().object2LongEntrySet()) {
                 AEKey aeKey = entry.getKey();
                 appMekAdjust$ae2ItemMap.computeIfAbsent(aeKey, k -> new HashMap<>()).put(key, entry.getLongValue());
+                appMekAdjust$ae2ItemCount += entry.getLongValue();
             }
             setNeedsUpdate();
         }
@@ -80,6 +89,7 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
             if (map.isEmpty()) {
                 appMekAdjust$ae2ItemMap.remove(aeKey);
             }
+            appMekAdjust$ae2ItemCount -= entry.getLongValue();
         }
     }
 
@@ -105,6 +115,7 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
                 var inserted = cellData.insert(key, remaining, action, source);
                 if (action.execute()) {
                     map.put(driveKey, map.getOrDefault(driveKey, 0L) + inserted);
+                    appMekAdjust$ae2ItemCount += inserted;
                 }
                 remaining -= inserted;
             }
@@ -131,10 +142,39 @@ public abstract class QIOFrequencyMixin implements QIOFrequencyExtension {
                 var newAmount = driveEntry.getValue() - extracted;
                 if (newAmount < 0) throw new IllegalStateException("Sync error: " + key + " is extracted more than stored (Requested: " + amount + ", Extracted: " + extracted + ", Stored: " + driveEntry.getValue() + ")");
                 map.put(driveEntry.getKey(), newAmount);
+                appMekAdjust$ae2ItemCount -= extracted;
             }
             remaining -= extracted;
         }
 
         return amount - remaining;
+    }
+
+    @Override
+    public long appMekAdjust$getAE2ItemCount() {
+        return appMekAdjust$ae2ItemCount;
+    }
+
+    @Override
+    public long appMekAdjust$getTotalItemCapacity() {
+        var ae2ItemCapacity = 0L;
+        for (var drive : this.driveMap.values()) {
+            if (drive instanceof QIOStorageCellData cellData) {
+                ae2ItemCapacity += cellData.getCountCapacity();
+            }
+        }
+        return getTotalItemCountCapacity() + ae2ItemCapacity;
+    }
+
+    @Override
+    public long appMekAdjust$getTotalTypeCapacity(boolean remote) {
+        if (remote) throw new NotImplementedException("Remote mode is not supported yet");
+        var ae2TypeCapacity = 0;
+        for (var drive : this.driveMap.values()) {
+            if (drive instanceof QIOStorageCellData cellData) {
+                ae2TypeCapacity += cellData.getTypeCapacity();
+            }
+        }
+        return getTotalItemTypes(remote) + ae2TypeCapacity;
     }
 }

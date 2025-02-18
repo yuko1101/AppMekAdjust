@@ -53,14 +53,14 @@ public abstract class QIODriveDataMixin implements QIODriveDataExtension {
         if (!(key.getDriveStack().getItem() instanceof IBasicCellItem)) {
             return original.call(instance, itemStack);
         }
-        return QIOStorageCellData.getCountCapacity(itemStack, (IBasicCellItem) itemStack.getItem());
+        return QIOStorageCellData.getItemCountCapacity(itemStack, (IBasicCellItem) itemStack.getItem());
     }
     @WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lmekanism/common/content/qio/IQIODriveItem;getTypeCapacity(Lnet/minecraft/world/item/ItemStack;)I"))
     private int initWrapTypeCapacity(IQIODriveItem instance, ItemStack itemStack, Operation<Integer> original) {
         if (!(key.getDriveStack().getItem() instanceof IBasicCellItem)) {
             return original.call(instance, itemStack);
         }
-        return QIOStorageCellData.getTypeCapacity(itemStack, (IBasicCellItem) itemStack.getItem());
+        return QIOStorageCellData.getItemTypeCapacity(itemStack, (IBasicCellItem) itemStack.getItem());
     }
 
     @WrapWithCondition(method = "<init>", at = @At(value = "INVOKE", target = "Lmekanism/common/attachments/qio/DriveContents;loadItemMap(Lmekanism/common/content/qio/QIODriveData;)V"))

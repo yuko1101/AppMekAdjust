@@ -9,7 +9,11 @@ import java.util.HashMap;
 
 public interface QIOFrequencyExtension {
     HashMap<AEKey, HashMap<QIODriveData.QIODriveKey, Long>> appMekAdjust$getAE2ItemMap();
+    long appMekAdjust$getAE2ItemCount();
 
     long appMekAdjust$massInsertAE2Items(AEKey key, long amount, Action action, IActionSource source);
     long appMekAdjust$massExtractAE2Items(AEKey key, long amount, Action action, IActionSource source);
+
+    long appMekAdjust$getTotalItemCapacity();
+    long appMekAdjust$getTotalTypeCapacity(boolean remote);
 }
