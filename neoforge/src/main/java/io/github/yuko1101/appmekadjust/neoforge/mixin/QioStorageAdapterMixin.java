@@ -4,15 +4,19 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.KeyCounter;
+import com.llamalad7.mixinextras.sugar.Local;
 import io.github.yuko1101.appmekadjust.neoforge.extension.QIOFrequencyExtension;
 import me.ramidzkh.mekae2.qio.QioStorageAdapter;
 import mekanism.api.Action;
 import mekanism.api.inventory.qio.IQIOFrequency;
+import mekanism.common.content.qio.QIOFrequency;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(QioStorageAdapter.class)
@@ -53,4 +57,16 @@ public abstract class QioStorageAdapterMixin {
             cir.setReturnValue(freq.appMekAdjust$massExtractAE2Items(what, amount, Action.fromFluidAction(mode.getFluidAction()), source));
         }
     }
+
+    @Inject(method = "getAvailableStacks", at = @At(value = "INVOKE", target = "Lmekanism/api/inventory/qio/IQIOFrequency;forAllHashedStored(Ljava/util/function/ObjLongConsumer;)V", shift = At.Shift.AFTER))
+    private void onGetAvailableStacks(KeyCounter out, CallbackInfo ci, @Local IQIOFrequency frequency) {
+        if (frequency instanceof QIOFrequency freq) {
+            var ae2ItemMap = ((QIOFrequencyExtension) freq).appMekAdjust$getAE2ItemMap();
+            ae2ItemMap.forEach((key, driveMap) -> {
+                var count = driveMap.values().stream().mapToLong(Long::longValue).sum();
+                out.add(key, count);
+            });
+        }
+    }
+
 }
