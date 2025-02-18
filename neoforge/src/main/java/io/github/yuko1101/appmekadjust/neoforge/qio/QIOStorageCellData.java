@@ -77,7 +77,7 @@ public class QIOStorageCellData extends QIODriveData {
 
     public long getAE2ItemCapacity() {
         if (cellItem instanceof BasicStorageCell basicStorageCell && basicStorageCell.getKeyType() != AEKeyType.items()) {
-            return (cellItem.getBytes(cellStack) - (long) getAE2TypeCapacity()) * 8;
+            return (cellItem.getBytes(cellStack) - (long) getAE2TypeCount() * 8) * 8;
         }
         return 0;
     }
@@ -91,7 +91,7 @@ public class QIOStorageCellData extends QIODriveData {
 
     public static long getItemCountCapacity(ItemStack cellStack, IBasicCellItem cellItem) {
         if (cellItem instanceof BasicStorageCell basicStorageCell && basicStorageCell.getKeyType() == AEKeyType.items()) {
-            return (cellItem.getBytes(cellStack) - (long) getItemTypeCapacity(cellStack, cellItem)) * 8;
+            return (cellItem.getBytes(cellStack) - (long) getItemTypeCapacity(cellStack, cellItem) * 8) * 8;
         }
         // TODO: check if other cell items can store items
         return 0;
