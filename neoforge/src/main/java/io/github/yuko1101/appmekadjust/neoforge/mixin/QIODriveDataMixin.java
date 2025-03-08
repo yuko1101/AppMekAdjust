@@ -10,7 +10,6 @@ import com.glodblock.github.appflux.common.me.cell.FluxCellInventory;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import io.github.yuko1101.appmekadjust.neoforge.mixin.accessor.BasicCellInventoryAccessor;
 import io.github.yuko1101.appmekadjust.neoforge.extension.QIODriveDataExtension;
 import io.github.yuko1101.appmekadjust.neoforge.qio.QIOStorageCellData;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -25,7 +24,6 @@ import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Mixin(QIODriveData.class)
@@ -71,7 +69,6 @@ public abstract class QIODriveDataMixin implements QIODriveDataExtension {
 
         ItemStack cellStack = key.getDriveStack();
 
-        // TODO: make not to occur cast exception
         this.appMekAdjust$cellInventory = StorageCells.getCellInventory(cellStack, null);
         if (this.appMekAdjust$cellInventory == null) {
             throw new IllegalStateException("Cell inventory is null");
