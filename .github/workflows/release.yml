@@ -24,7 +24,11 @@ jobs:
         run: |
           echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
           cat gradle.properties | grep minecraft_version | sed -n -r "s/^minecraft_version=(.+)$/\1/p" | xargs -I {} echo "MINECRAFT_VERSION={}" >> $GITHUB_ENV
-          sed -i -r "s/^mod_version=.+$/mod_version=${VERSION}/" gradle.properties
+
+      - name: Set Project Version
+        shell: bash
+        run: |
+          sed -i -r "s/^mod_version=.+$/mod_version=$VERSION/" gradle.properties
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
