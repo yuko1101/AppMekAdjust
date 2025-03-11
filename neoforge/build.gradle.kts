@@ -41,6 +41,7 @@ dependencies {
     modImplementation("curse.maven:applied-mekanistics-574300:5978711")
     modImplementation("curse.maven:glodium-957920:5821676")
     modImplementation("curse.maven:applied-flux-965012:6171002")
+    modImplementation("curse.maven:mega-cells-622112:6132027")
 }
 
 tasks.processResources {

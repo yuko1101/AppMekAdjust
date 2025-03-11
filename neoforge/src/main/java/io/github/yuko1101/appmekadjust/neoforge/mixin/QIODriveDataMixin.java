@@ -5,8 +5,6 @@ import appeng.api.stacks.AEKey;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.ICellWorkbenchItem;
 import appeng.api.storage.cells.StorageCell;
-import appeng.me.cells.BasicCellInventory;
-import com.glodblock.github.appflux.common.me.cell.FluxCellInventory;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -74,7 +72,7 @@ public abstract class QIODriveDataMixin implements QIODriveDataExtension {
             throw new IllegalStateException("Cell inventory is null");
         }
 
-        Consumer<Object2LongMap. Entry<AEKey>> addAE2Item = entry -> {
+        Consumer<Object2LongMap.Entry<AEKey>> addAE2Item = entry -> {
             AEKey key = entry.getKey();
             long value = entry.getLongValue();
             if (key instanceof AEItemKey itemKey) {
@@ -85,14 +83,8 @@ public abstract class QIODriveDataMixin implements QIODriveDataExtension {
             }
         };
 
-        if (this.appMekAdjust$cellInventory instanceof BasicCellInventory basicCellInventory) {
-            for (var e : basicCellInventory.getAvailableStacks()) {
-                addAE2Item.accept(e);
-            }
-        } else if (this.appMekAdjust$cellInventory instanceof FluxCellInventory fluxCellInventory) {
-            for (var e : fluxCellInventory.getAvailableStacks()) {
-                addAE2Item.accept(e);
-            }
+        for (var e : this.appMekAdjust$cellInventory.getAvailableStacks()) {
+            addAE2Item.accept(e);
         }
 
         return false;
